@@ -1,26 +1,43 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-try:
-    df = pd.read_csv("backtest_history.csv")
-    df['Date'] = pd.to_datetime(df['Date'], format='%Y%m%d')
-except FileNotFoundError:
-    print("Error: backtest_history.csv not found.")
-    exit()
+df = pd.read_csv("backtest_history.csv")
+df["Date"] = pd.to_datetime(df["Date"], format="%Y%m%d")
 
-plt.style.use('dark_background')
+sp500 = pd.read_csv("sp500_benchmark.csv")
+sp500["Date"] = pd.to_datetime(sp500["Date"])
+
+df = df.merge(sp500, on="Date", how="left")
+
+df["Strategy_norm"] = df["Net_Worth"] / df["Net_Worth"].iloc[0]
+df["SP500_norm"] = df["SP500_Net_Worth"] / df["SP500_Net_Worth"].iloc[0]
+
+plt.style.use("dark_background")
 plt.figure(figsize=(12, 6))
 
-plt.plot(df['Date'], df['Net_Worth'], label='Strategy Net Worth', color='#00ffcc', linewidth=1.5)
+plt.plot(
+    df["Date"],
+    df["Strategy_norm"],
+    label="Strategy",
+    color="#00ffcc",
+    linewidth=2
+)
 
-df['Net_Worth_MA'] = df['Net_Worth'].rolling(window=50).mean()
-plt.plot(df['Date'], df['Net_Worth_MA'], label='50-Day Trend', color='#ff3366', linestyle='--', alpha=0.7)
+plt.plot(
+    df["Date"],
+    df["SP500_norm"],
+    label="S&P 500",
+    color="#BC13FE",
+    linewidth=2
+)
 
-plt.title('Backtest Results: Risk-Adjusted Momentum Strategy', fontsize=14, pad=20)
-plt.xlabel('Date', fontsize=12)
-plt.ylabel('Total Value ($)', fontsize=12)
-plt.grid(True, which='both', linestyle='--', alpha=0.3)
+plt.title("Strategy vs S&P 500 (Normalized)", fontsize=14, pad=20)
+plt.xlabel("Date", fontsize=12)
+plt.ylabel("Growth (Start = 1)", fontsize=12)
+
+plt.grid(True, linestyle="--", alpha=0.3)
 plt.legend()
 plt.tight_layout()
 
-plt.savefig("networth_curve.png", dpi=300)
+plt.savefig("strategy_vs_benchmarks_normalized.png", dpi=300)
+plt.show()
