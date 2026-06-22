@@ -42,7 +42,7 @@ The project is composed of six main scripts:
 - `updatedStocks/` → Processed files featuring GK volatility and MA signals.
 - `masterData.parquet` → The consolidated "market-map" used for the simulation.
 - `backtest_history.csv` → The chronological record of strategy net worth.
-- `networth_curve.png` → Visual performance report.
+- `strategy_vs_benchmarks_normalized.png` → Visual performance report in comaparison to S&P 500.
 
 ---
 
