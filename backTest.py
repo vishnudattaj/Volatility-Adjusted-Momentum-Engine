@@ -2,16 +2,19 @@ import pandas as pd
 from tqdm import tqdm
 
 
-def buyStocks(investments, master, holdings, date, stock_price, yesterday=None):
+def buyStocks(investments, master, holdings, date, stock_price, yesterday=None, networthScale=70000):
     prices = master.loc[date, investments]
     if yesterday is not None:
         amount = stock_price.loc[yesterday, investments]
     else:
         amount = stock_price.loc[date, investments]
-    share_counts = amount // prices
+
+    scaled_amount = amount * (networthScale / 70000)
+
+    share_counts = scaled_amount // prices
     holdings.update(share_counts.to_dict())
 
-    return (amount % prices).sum(), amount.sum()
+    return (scaled_amount % prices).sum(), scaled_amount.sum()
 
 def sellStocks(investments, open_prices, holdings, date):
     if not investments:
@@ -50,13 +53,15 @@ holdings = {}
 setBuy = False
 setSell = False
 networth = []
+cashHistory = []
 
 open_prices = master_df['Open'].ffill()
 close_prices = master_df['Close'].ffill()
 signals = master_df['risk-adj-signal'].fillna(0)
 volume = master_df['daily-volume'].ffill()
 stock_price = master_df['stock-price'].ffill()
-combined = pd.concat([signals, stock_price], axis=1, keys=['Signal', 'Price'])
+trend200 = master_df["trend200"].ffill()
+combined = pd.concat([signals, stock_price, trend200], axis=1, keys=['Signal', 'Price', 'trend200'])
 
 for i in tqdm(range(len(dates)), desc="Backtesting Strategy"):
     index = dates[i]
@@ -70,9 +75,8 @@ for i in tqdm(range(len(dates)), desc="Backtesting Strategy"):
 
     else:
         if setBuy:
-            leftover_change, totalAmount = buyStocks(investmentList, open_prices, holdings, index, stock_price, yesterday)
+            leftover_change, totalAmount = buyStocks(investmentList, open_prices, holdings, index, stock_price, yesterday, networthScale=current_cash + market_value)
             current_cash = current_cash + leftover_change - totalAmount
-
             setBuy = False
 
         if setSell:
@@ -89,14 +93,14 @@ for i in tqdm(range(len(dates)), desc="Backtesting Strategy"):
 
             filtered_candidates = day_data[
                 (day_data['Price_Actual'] > 5) &
-                (day_data['Signal'] > 0) &
-                (day_data['Volume'] > 2000000)
+                (day_data['Volume'] > 1500000) &
+                (day_data['trend200'] > 0)
                 ].copy()
 
             filtered_candidates = filtered_candidates.drop(labels=holdings.keys(), errors='ignore')
 
             filtered_candidates = filtered_candidates.sort_values(by='Signal', ascending=False)
-            filtered_candidates['price-sum'] = filtered_candidates['Price'].cumsum()
+            filtered_candidates['price-sum'] = (filtered_candidates['Price'] * ((current_cash + market_value) / 70000)).cumsum()
 
             stocks_we_can_afford = filtered_candidates[filtered_candidates['price-sum'] < current_cash]
 
@@ -119,11 +123,15 @@ for i in tqdm(range(len(dates)), desc="Backtesting Strategy"):
             market_value = 0
 
         networth.append(current_cash + market_value)
+        cashHistory.append(current_cash)
     holdings = {ticker: qty for ticker, qty in holdings.items() if qty > 0}
 
 results_df = pd.DataFrame({
     'Date': dates,
-    'Net_Worth': networth
+    'Net_Worth': networth,
 })
 
+cash = pd.DataFrame(cashHistory)
+
 results_df.to_csv("backtest_history.csv", index=False)
+cash.to_csv("cash.csv", index=False)
