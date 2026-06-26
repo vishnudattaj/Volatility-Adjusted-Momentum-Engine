@@ -1,6 +1,6 @@
 # Volatility-Adjusted Momentum Engine
 
-A quantitative framework for evaluating risk-adjusted momentum strategies with dynamic position sizing. This project implements a dual-filter approach: identifying price breakouts via moving average spreads and normalizing those signals using Garman-Klass volatility estimators to prioritize stable upward trends. In additoin, this project implements a volatility-based rotation logic, where capital allocation is inversely proportional to an asset's Garman-Klass volatility, ensuring a balanced risk contribution across the portfolio.
+A quantitative framework for evaluating risk-adjusted momentum strategies with dynamic position sizing. This project implements a dual-filter approach: identifying price breakouts via moving average spreads and normalizing those signals using Garman-Klass volatility estimators to prioritize stable upward trends. In addition, this project implements a volatility-based rotation logic, where capital allocation is inversely proportional to an asset's Garman-Klass volatility, ensuring a balanced risk contribution across the portfolio. Furthermore, it utilizes macro-momentum regime filters to isolate structural secular winners and dynamically scales equity allocations to eliminate cash drag as the portfolio compounds.
 
 ---
 
@@ -15,6 +15,7 @@ The project is composed of six main scripts:
 ### `dataCleaner.py`  
 - **Garman-Klass Volatility:** Calculates high-efficiency volatility estimates using Open, High, Low, and Close prices.
 - **Signal Generation:** Computes the **Signal Strength** as the percentage difference between the 50-day (short-term) and 200-day (long-term) moving averages.
+- **Macro Regime Filters:** Calculates `trend50` (49-day shift) and `trend200` (199-day shift) to measure macro-momentum and weed out short-term noise, ensuring the asset is in a proven structural uptrend.
 - **Data Pruning:** Standardizes the timeline to start in 2012 and removes tickers with insufficient price history for the moving average windows.
 
 ### `stockRanker.py`  
@@ -27,8 +28,9 @@ The project is composed of six main scripts:
 
 ### `backTest.py`  
 - **Execution Engine:** Simulates a daily rebalanced portfolio with a 100-slot maximum capacity.
+- **Dynamic Equity Scaling:** Transitions from fixed-dollar sizing to dynamic scaling based on total net worth, allowing position sizes to organically grow with the portfolio and entirely eliminate idle "cash drag."
+- **Precision Cash Accounting:** Utilizes exact modulo arithmetic (`scaled_amount % prices`) to handle fractional remainders flawlessly, ensuring perfectly balanced cash reserves during transactions.
 - **Dynamic Rebalancing:** Automatically sells positions when the risk-adjusted signal turns negative and reinvests capital into the highest-ranked available candidates.
-- **Cash Management:** Tracks transaction leftovers and maintains a running log of total account equity.
 
 ### `graph.py`  
 - **Performance Analytics:** Parses the backtest results to generate a professional net worth curve.
@@ -42,7 +44,7 @@ The project is composed of six main scripts:
 - `updatedStocks/` → Processed files featuring GK volatility and MA signals.
 - `masterData.parquet` → The consolidated "market-map" used for the simulation.
 - `backtest_history.csv` → The chronological record of strategy net worth.
-- `strategy_vs_benchmarks_normalized.png` → Visual performance report in comaparison to S&P 500.
+- `strategy_vs_benchmarks_normalized.png` → Visual performance report in comparison to S&P 500.
 
 ---
 
@@ -61,6 +63,9 @@ The project is composed of six main scripts:
 
 - **Volatility Normalization:** Uses Garman-Klass logic to penalize "noisy" price movement.
 - **MA Spread Tracking:** Uses the distance between the 50/200 MAs to quantify momentum velocity.
+- **Macro-Momentum Regime Filtering:** Uses 49/199-day absolute price shifts instead of sensitive short-term slopes to lock into long-term secular trends.
 - **Liquidity Guardrails:** Built-in volume and price filters to prevent "penny stock" bias.
 - **Point-in-Time Simulation:** Designed to prevent look-ahead bias by using pivoted daily data.
 - **Inverse Volatility Weighting:** Positions are sized based on risk, not just stock price.
+- **Zero Cash Drag Architecture:** Purchasing power automatically scales based on current total net worth, compounding returns efficiently without leaving dead capital.
+- **Flawless Transaction Accounting:** Employs modulo-based ledger logic to perfectly calculate actual cash spent versus fractional remainders.
