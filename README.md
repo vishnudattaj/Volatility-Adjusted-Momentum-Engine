@@ -15,7 +15,7 @@ The project is composed of six main scripts:
 ### `dataCleaner.py`  
 - **Garman-Klass Volatility:** Calculates high-efficiency volatility estimates using Open, High, Low, and Close prices.
 - **Signal Generation:** Computes the **Signal Strength** as the percentage difference between the 50-day (short-term) and 200-day (long-term) moving averages.
-- **Macro Regime Filters:** Calculates `trend50` (49-day shift) and `trend200` (199-day shift) to measure macro-momentum and weed out short-term noise, ensuring the asset is in a proven structural uptrend.
+- **Macro Regime Filters:** Calculates `trend200` (199-day shift) to measure macro-momentum and weed out short-term noise, ensuring the asset is in a proven structural uptrend.
 - **Data Pruning:** Standardizes the timeline to start in 2012 and removes tickers with insufficient price history for the moving average windows.
 
 ### `stockRanker.py`  
