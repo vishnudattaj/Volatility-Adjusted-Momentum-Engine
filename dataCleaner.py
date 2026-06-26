@@ -12,6 +12,9 @@ def crossAvg(df):
     df["short-term-ma"] = df["Close"].rolling(window=50, min_periods=50).mean()
     df["long-term-ma"] = df["Close"].rolling(window=200, min_periods=200).mean()
     df["stock-price"] = 14.45 / df["garman-klass"].clip(lower=0.005, upper=0.2)
+    df["trend200"] = df["long-term-ma"] - df["long-term-ma"].shift(199)
+    df.loc[df["short-term-ma"].isna(), "trend50"] = np.nan
+    df.loc[df["long-term-ma"].isna(), "trend200"] = np.nan
 
     return df
 
